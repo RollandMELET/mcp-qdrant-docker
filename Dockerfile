@@ -17,9 +17,9 @@ ENV COLLECTION_NAME=""
 # Expose the port the server runs on
 EXPOSE 8000
 
-# Add healthcheck with fallback to root path
-HEALTHCHECK --interval=30s --timeout=30s --start-period=15s --retries=3 \
-CMD curl -f http://localhost:8000/healthz || curl -f http://localhost:8000/ || exit 1
+# Add healthcheck with more generous parameters
+HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=5 \
+CMD curl -f http://localhost:8000/ || curl -f http://localhost:8000/healthz || exit 1
 
 # Copy startup script
 COPY start.sh /app/start.sh
