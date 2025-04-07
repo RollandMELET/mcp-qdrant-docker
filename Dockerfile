@@ -6,10 +6,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-RUN pip install --no-cache-dir uvicorn
-RUN pip install --no-cache-dir fastembed
-RUN pip install --no-cache-dir qdrant-client
-RUN pip install --no-cache-dir mcp-server-qdrant
+RUN pip install --no-cache-dir qdrant-client fastembed uvicorn
+RUN pip install --no-cache-dir git+https://github.com/qdrant/mcp-server-qdrant.git
 
 # Environment variables for configuration
 ENV QDRANT_URL=""
@@ -20,5 +18,4 @@ ENV COLLECTION_NAME=""
 EXPOSE 8000
 
 # Run the MCP server when the container starts
-# Note: The correct way to run the module
 CMD ["python", "-m", "mcp_server_qdrant.main"]
