@@ -10,10 +10,11 @@ services:
       - COLLECTION_NAME=ClaudeCollection
     ports:
       - "8000:8000"
+      - "8001:8001"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/", "||", "echo", "Server not ready yet"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
       interval: 30s
-      timeout: 30s
+      timeout: 10s
       retries: 5
-      start_period: 20s
+      start_period: 45s
