@@ -44,8 +44,8 @@ else
     if [[ $COLLECTION_TEST == *"collection_failed"* || $COLLECTION_TEST == *"Not found"* ]]; then
         echo "WARNING: Collection $COLLECTION_NAME does not exist. Creating it..."
         
-        # Créer la collection avec une configuration par défaut
-        CREATE_BODY="{\"name\":\"$COLLECTION_NAME\",\"vectors\":{\"size\":1024,\"distance\":\"Cosine\"}}"
+        # Créer la collection avec une configuration par défaut pour Claude
+        CREATE_BODY="{\"name\":\"$COLLECTION_NAME\",\"vectors\":{\"size\":1536,\"distance\":\"Cosine\"}}"
         CREATE_CMD="$curl_cmd -X PUT -H \"Content-Type: application/json\" -d '$CREATE_BODY' \"$QDRANT_URL/collections/$COLLECTION_NAME\""
         
         CREATE_RESULT=$(eval $CREATE_CMD || echo "create_failed")
@@ -65,17 +65,42 @@ fi
 # Créer le répertoire pour les logs
 mkdir -p /app/logs
 
-# Démarrer le serveur MCP avec redirection des logs
+# Afficher les versions des packages installés pour le débogage
+echo "Installed packages versions:"
+pip freeze | grep -E "mcp|qdrant|fastembed" || echo "No matching packages found"
+
+# Essayer de lister les commandes disponibles dans le package mcp_server_qdrant
+echo "Available commands in mcp_server_qdrant package:"
+pip show mcp-server-qdrant || echo "Package not found"
+find /usr/local/lib/python*/site-packages/mcp_server_qdrant -type f -name "*.py" | sort || echo "Failed to find package files"
+
+# Démarrer le serveur MCP avec redirection des logs et plus de verbosité
 echo "Starting MCP server..."
-python -m mcp_server_qdrant.main > /app/logs/mcp.log 2>&1 &
+echo "Running: python -m mcp_server_qdrant.main"
+python -m mcp_server_qdrant.main --debug > /app/logs/mcp.log 2>&1 &
 MCP_PID=$!
+echo "MCP server process started with PID: $MCP_PID"
 
 # Vérifier que le processus existe toujours après 2 secondes
 sleep 2
 if ! ps -p $MCP_PID > /dev/null; then
     echo "ERROR: MCP server failed to start. Check logs below:"
     cat /app/logs/mcp.log
-    exit 1
+    
+    # Tentative alternative de démarrage avec un module différent
+    echo "Trying alternative start method..."
+    python -m mcp_server_qdrant.app > /app/logs/mcp_alt.log 2>&1 &
+    MCP_PID=$!
+    sleep 2
+    
+    if ! ps -p $MCP_PID > /dev/null; then
+        echo "ERROR: Alternative method also failed. Check logs below:"
+        cat /app/logs/mcp_alt.log
+        exit 1
+    fi
+    
+    echo "Alternative method seems to work! Continuing with PID: $MCP_PID"
+    cp /app/logs/mcp_alt.log /app/logs/mcp.log
 fi
 
 # Attendre que le serveur soit prêt
@@ -92,8 +117,11 @@ while [ $RETRY -lt $MAX_RETRIES ]; do
     fi
     
     # Tester si le serveur répond
-    if curl -s -f http://localhost:8000/ > /dev/null; then
+    HEALTH_CHECK=$(curl -s -f http://localhost:8000/ || echo "not_ready")
+    
+    if [ "$HEALTH_CHECK" != "not_ready" ]; then
         echo "MCP server is now ready!"
+        echo "Health check response: $HEALTH_CHECK"
         break
     fi
     
@@ -124,8 +152,17 @@ echo "Setting up healthcheck endpoint..."
         sleep 1
     done
 ) &
+HEALTHCHECK_PID=$!
+echo "Healthcheck service started with PID: $HEALTHCHECK_PID"
 
 # Garder le script en cours d'exécution
 echo "MCP Server PID: $MCP_PID - Monitoring logs..."
 tail -f /app/logs/mcp.log &
+TAIL_PID=$!
+
+# Afficher tous les processus en cours pour le débogage
+echo "Running processes:"
+ps aux
+
+# Attendre le processus principal et garder le conteneur en vie
 wait $MCP_PID
