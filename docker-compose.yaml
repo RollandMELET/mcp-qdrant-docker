@@ -5,15 +5,15 @@ services:
     build: .
     container_name: mcp-server-qdrant
     environment:
-      - QDRANT_URL=${QDRANT_URL}
-      - QDRANT_API_KEY=${QDRANT_API_KEY}
-      - COLLECTION_NAME=${COLLECTION_NAME}
+      - QDRANT_URL=http://qdrant-v8gc8cc4sk80o444ccck0gkg.178.16.129.71.sslip.io
+      - QDRANT_API_KEY=obuONHxVHnSKivuN9Q5xqZGqtERfc2KM
+      - COLLECTION_NAME=ClaudeCollection
     ports:
       - "8000:8000"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz", "||", "curl", "-f", "http://localhost:8000/"]
       interval: 30s
-      timeout: 10s
+      timeout: 30s
       retries: 3
-      start_period: 5s
+      start_period: 15s
