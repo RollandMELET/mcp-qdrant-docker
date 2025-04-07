@@ -9,6 +9,7 @@ services:
       - QDRANT_API_KEY=obuONHxVHnSKivuN9Q5xqZGqtERfc2KM
       - COLLECTION_NAME=ClaudeCollection
       - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - IGNORE_CONNECTION_ERROR=true
     ports:
       - "8000:8000"
     restart: unless-stopped
