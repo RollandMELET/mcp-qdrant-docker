@@ -2,8 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install git, curl and netcat
-RUN apt-get update && apt-get install -y git curl netcat-openbsd && rm -rf /var/lib/apt/lists/*
+# Install git, curl, netcat and procps
+RUN apt-get update && apt-get install -y git curl netcat-openbsd procps && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 RUN pip install --no-cache-dir qdrant-client fastembed uvicorn
