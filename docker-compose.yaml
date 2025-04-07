@@ -8,13 +8,7 @@ services:
       - QDRANT_URL=http://qdrant-v8gc8cc4sk80o444ccck0gkg.178.16.129.71.sslip.io
       - QDRANT_API_KEY=obuONHxVHnSKivuN9Q5xqZGqtERfc2KM
       - COLLECTION_NAME=ClaudeCollection
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
     ports:
       - "8000:8000"
-      - "8001:8001"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 45s
