@@ -13,6 +13,8 @@ ENV QDRANT_URL=""
 ENV QDRANT_API_KEY=""
 ENV COLLECTION_NAME=""
 ENV EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
+ENV IGNORE_CONNECTION_ERROR="false"
+ENV MOCK_MODE="false"
 
 # Copier le script de démarrage
 COPY start.sh /app/start.sh
