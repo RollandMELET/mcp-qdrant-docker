@@ -17,5 +17,9 @@ ENV COLLECTION_NAME=""
 # Expose the port the server runs on
 EXPOSE 8000
 
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/healthz || exit 1
+
 # Run the MCP server when the container starts
 CMD ["python", "-m", "mcp_server_qdrant.main"]
