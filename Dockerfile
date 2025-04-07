@@ -2,29 +2,21 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install git, curl, netcat and procps
-RUN apt-get update && apt-get install -y git curl netcat-openbsd procps && rm -rf /var/lib/apt/lists/*
+# Installer les dépendances nécessaires
+RUN pip install --no-cache-dir mcp-server-qdrant
 
-# Install Python dependencies
-RUN pip install --no-cache-dir qdrant-client fastembed uvicorn
-RUN pip install --no-cache-dir git+https://github.com/qdrant/mcp-server-qdrant.git
-
-# Environment variables for configuration
+# Variables d'environnement
 ENV QDRANT_URL=""
 ENV QDRANT_API_KEY=""
 ENV COLLECTION_NAME=""
+ENV EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
 
-# Expose the ports
+# Expose port
 EXPOSE 8000
-EXPOSE 8001
 
-# Add healthcheck using port 8001 (which is our fallback for health checking)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=5 \
-CMD curl -f http://localhost:8001/ || exit 1
+# Un healthcheck simple qui vérifie si le serveur est en cours d'exécution
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8000/ || exit 1
 
-# Copy startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
-# Run the MCP server when the container starts
-CMD ["/app/start.sh"]
+# Démarrer le serveur MCP
+CMD ["python", "-m", "mcp_server_qdrant.server", "--transport", "sse"]
